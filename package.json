@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "create:user": "ansible-playbook -i devops/create-user/hosts devops/create-user/playbook.yml  --ask-vault-pass",
+    "provision": "ansible-playbook -i devops/provision/hosts devops/provision/playbook.yml",
+    "deploy": "ansible-playbook -i devops/deploy/hosts devops/deploy/deploy.yml"
+  }
+}

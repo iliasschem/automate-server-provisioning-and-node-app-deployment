@@ -1,0 +1,53 @@
+---
+- name: Deploy
+  hosts: local
+  vars:
+    project_path: /home/superUser/www
+
+  tasks:
+    - name: Set some variable
+      set_fact:
+        release_path: "{{ project_path }}/releases/{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+        current_path: "{{ project_path }}/current"
+
+    - name: Create new folder
+      file:
+        dest={{ release_path }}
+        mode=0755
+        recurse=yes
+        state=directory
+
+    - name: Retrieve current release folder
+      command: readlink -f current
+      register: current_release_path
+      ignore_errors: yes
+      args:
+        chdir: "{{ project_path }}"
+
+    #    - name: Build project and compress the result
+    #      command: you can build and compress your project
+
+    - name: Copy files to remote server
+      copy:
+        src: ../../node-app
+        dest: "{{ release_path }}"
+
+    - name: Update symlink
+      file:
+        src={{ release_path }}
+        dest={{ current_path }}
+        state=link
+
+    - name: Delete old pm2 process
+      command: pm2 kill
+      ignore_errors: yes
+
+    - name: Start pm2
+      command: 'pm2 start -f {{ current_path }}/node-app/app.js --name node-app'
+
+    - name: Delete old dir.
+      file:
+        state: absent
+        path: "{{ current_release_path.stdout }}/"
+      when: current_release_path.stdout != current_path
+

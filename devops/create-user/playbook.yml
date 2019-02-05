@@ -1,0 +1,46 @@
+---
+
+- name: CreateUser
+  hosts: local
+  vars_files:
+    - vars/main.yml
+
+
+  tasks:
+    - name: Make sure we have a 'superUsersGroup' group
+      group:
+        name=superUsersGroup
+        state=present
+
+    - name: Set some variable (decrypt superUserPassword )
+      set_fact:
+        superUser_password: "{{superUserPassword}}"
+
+
+    - name: Allow superUsers group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%superUsersGroup'
+        line: '%superUsersGroup ALL=(ALL) NOPASSWD: ALL'
+
+    - name: Create a superUser user
+      user:
+        name: superUser
+        password: "{{ superUser_password | password_hash('sha512') }}"
+        groups: superUsersGroup
+        state: present
+        shell: /bin/bash
+        system: no
+        append: yes
+        createhome: yes
+        home: /home/superUser
+        update_password: on_create
+        generate_ssh_key: yes
+
+    - name: Add authorized keys
+      authorized_key:
+        user: superUser
+        state: present
+        key: "{{ lookup('pipe','cat ./public-keys/*.pub') }}"
+

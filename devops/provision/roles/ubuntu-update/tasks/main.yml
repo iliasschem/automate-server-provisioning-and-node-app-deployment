@@ -1,0 +1,13 @@
+---
+
+- name: Run apt-get update as a separate step
+  apt:
+    update_cache: yes
+
+- name: install base packages
+  apt: pkg={{item}} state=present update_cache=yes cache_valid_time=604800
+  become: yes
+  with_items:
+    - rsync
+    - gnupg
+    - git

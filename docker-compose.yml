@@ -1,0 +1,10 @@
+version: '3.2'
+services:
+  ubuntu:
+    build:
+      context: .
+    container_name: ubuntu
+    ports:
+      - "22:22"
+      - "5000:5000"
+      - "3000:3000"
